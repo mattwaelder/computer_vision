@@ -121,4 +121,9 @@ issues:
   this does not account for cars going the opposite direction.
 
   adding and removing cars from the list is going to be messy, i feel like the coordinates are going to be sloppy and a lot of duplicate cars will be added and removed from the list (maybe with some math guard rails this can be reduced... but ill need to test it pretty manually)
+
+research "Tensorflow Cumulative Object Counting"
+--provide each object with an id (and attach that to rect).
+--set up "finish line" that when reached adds to the persistent count
+--still need to be able to consistently identify individual objects between frames for this method, does TF have any utilities for this?
 */
