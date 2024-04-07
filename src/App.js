@@ -43,6 +43,10 @@ function App() {
       const object = await network.detect(video);
       console.log(object);
 
+      ///////////////////////////////
+      //DO WORK ON OBJECT TO TRACK IT
+      ///////////////////////////////
+
       const canvas = canvasRef.current.getContext("2d");
 
       //draw boxes around objects
@@ -96,3 +100,25 @@ function App() {
 }
 
 export default App;
+
+/*
+Base computer vision portion of the project works well
+I need to find a way to track objects so that i can count them
+
+every frame the process runs and draws boxes around the objects in frame, but i need to be able to tie those objects to previous and future frames. I need to be able to track a unique object somehow and follow it to the edge of the frame.
+
+--initial ideas
+TF only currently provides me with position, class, and certainty for each object... with that i feel that the position is the simplest way to keep track of an object between frames.
+
+proposed path:
+  -ill need to wait for a care to be fully in frame (x > 0 && class === "car")
+  -then ill need to take that car and store it in a list of current vehicles that are being tracked. array of objects
+  -when any car gets to the end of the frame ~ (x + width === view width), i remove the car from the list.
+
+issues:
+  the camera may not be accurate enough to discern between two cars next to eachother.
+
+  this does not account for cars going the opposite direction.
+
+  adding and removing cars from the list is going to be messy, i feel like the coordinates are going to be sloppy and a lot of duplicate cars will be added and removed from the list (maybe with some math guard rails this can be reduced... but ill need to test it pretty manually)
+*/
