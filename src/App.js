@@ -18,7 +18,7 @@ function App() {
     //refresh in ms (framerate)
     setInterval(() => {
       detect(network);
-    }, 100);
+    }, 10);
   };
 
   const detect = async (network) => {
