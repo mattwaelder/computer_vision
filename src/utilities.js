@@ -17,3 +17,5 @@ export const drawBoundingRect = (detections, canvas) => {
     canvas.stroke();
   });
 };
+
+//id like the make the lines thicker and the font more readable, i think (background?)

@@ -1,6 +1,6 @@
 import logo from "./logo.svg";
 import "./App.css";
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { drawBoundingRect } from "./utilities.js";
 //import tensorflow main lib
 import * as tf from "@tensorflow/tfjs";
@@ -13,12 +13,18 @@ function App() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
+  let detections = [];
+  let confidenceFloor = 0.7;
+  let posVariance = 0.9;
+  const [count, setCount] = useState(0);
+
   const runCoco = async () => {
     const network = await cocossd.load();
     //refresh in ms (framerate)
     setInterval(() => {
+      //call detect function ever X ms
       detect(network);
-    }, 10);
+    }, 10000);
   };
 
   const detect = async (network) => {
@@ -40,17 +46,68 @@ function App() {
       canvasRef.current.height = videoHeight;
 
       //detect objects in video from network
-      const object = await network.detect(video);
-      console.log(object);
+      const objects = await network.detect(video);
+      // console.log(objects);
 
       ///////////////////////////////
       //DO WORK ON OBJECT TO TRACK IT
+      objects.forEach((obj) => {
+        //if its for sure a phone
+        if (obj.class === "cell phone" && obj.score > confidenceFloor) {
+          //this objects xy pos based on bbox (x,y,width,height)
+          let objPosSum = obj.bbox[0] + obj.bbox[1];
+
+          //check tracked objects for a match
+          //if none tracked, add obj
+          if (detections.length === 0) {
+            console.warn("LIST WAS EMPTY, ADDING FIRST ELEMENT");
+            detections.push({
+              id: 1,
+              posX: obj.bbox[0],
+              posY: obj.bbox[1],
+            });
+            return;
+          } else {
+            //itterate through tracked objects attempting to find a positional match
+            detections.forEach(({ id, posX, posY }) => {
+              console.log(id, posX, posY);
+              console.warn("LOOPING THROUGH DETECTIONS!");
+
+              //sum of xy pos values is within 10% in either direction
+              if (0.8 * objPosSum >= posX + posY <= 1.2 * objPosSum) {
+                //update the tracked objects position
+                if (detections[id]) {
+                  detections[id].posX = obj.bbox[0];
+                  detections[id].posY = obj.bbox[1];
+                }
+                // detections[id]?.posX = obj.bbox[0];
+                // detections[id]?.posY = obj.bbox[1];
+              }
+              return;
+            });
+            //if this object is not being tracked, add it to the array
+            console.warn("NEW OBJECT THAT WAS NOT BEING TRACKED");
+            detections.push({
+              id: detections.length + 1,
+              posX: obj.bbox[0],
+              posY: obj.bbox[1],
+            });
+
+            //if tracked object x value reaches finish line
+            //itterate count
+            //remove from list
+          }
+
+          setCount((count) => count + 1);
+        }
+      });
+      if (detections.length > 0) console.log(detections);
       ///////////////////////////////
 
       const canvas = canvasRef.current.getContext("2d");
 
       //draw boxes around objects
-      drawBoundingRect(object, canvas);
+      drawBoundingRect(objects, canvas);
     }
   };
 
@@ -59,8 +116,21 @@ function App() {
     runCoco();
   }, []);
 
+  const resetList = () => {
+    console.warn("RESET");
+    setCount(0);
+    detections = [];
+    console.log(detections);
+  };
+
   return (
     <div className="App">
+      <div className="resetBtn">
+        <button onClick={() => resetList()}>FLUSH ENTRIES</button>
+      </div>
+      <div className="counter">
+        <p>{count}</p>
+      </div>
       <div>
         <Webcam
           ref={webcamRef}
@@ -126,4 +196,8 @@ research "Tensorflow Cumulative Object Counting"
 --provide each object with an id (and attach that to rect).
 --set up "finish line" that when reached adds to the persistent count
 --still need to be able to consistently identify individual objects between frames for this method, does TF have any utilities for this?
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+summing xy coords is likely a bad idea, but its an easy way to get started w/ validation esp while testing on lone objects...
+every frame its calling all of the console warns, which means my breaks are not working. i should make this cleaner by taking the code and storing it in functions that i call rather than keeping it all in the detect function
 */
