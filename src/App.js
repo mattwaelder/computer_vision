@@ -12,9 +12,10 @@ import Webcam from "react-webcam";
 function App() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
+  const lineRef = useRef(null);
 
   let detections = [];
-  let confidenceFloor = 0.7;
+  let confidenceFloor = 0.6;
   let posVariance = 0.9;
   const [count, setCount] = useState(0);
 
@@ -61,6 +62,9 @@ function App() {
           let objPosSum = obj.bbox[0] + obj.bbox[1];
           let lowerBount = 0.8 * objPosSum;
           let upperBound = 1.2 * objPosSum;
+          // console.log(lowerBount, objPosSum, upperBound);
+          //x value where tracked elements are counted
+          const finishLine = 320;
 
           //if there are objects being tracked
           if (detections.length >= 1) {
@@ -81,14 +85,28 @@ function App() {
                   `(${Math.round(obj.bbox[0])}, ${Math.round(obj.bbox[1])})`
                 );
 
-                detections[index].posX = Math.round(obj.bbox[0]);
-                detections[index].posY = Math.round(obj.bbox[1]);
+                //check x value to see if the object is at the finish line
+                if (obj.bbox[0] >= finishLine) {
+                  console.log("FINISHED");
+                  //if it is at the finish line
+                  //itterate counter
+                  setCount((count) => count + 1);
+                  //remove tracked element
+                  detections.splice(index, 1);
+                  console.log(detections);
+                } else {
+                  //if it is still being tracked, update coordinates
+                  detections[index].posX = Math.round(obj.bbox[0]);
+                  detections[index].posY = Math.round(obj.bbox[1]);
+                }
 
                 // console.log(detections[index]);
               }
             });
           } else if (detections.length === 0) {
             //first detection of desired object
+            if (obj.bbox[0] >= finishLine) return;
+
             console.warn("LIST WAS EMPTY, ADDING FIRST DETECTION FOR TRACKING");
             isNewObj = false;
             detections.push({
@@ -100,6 +118,8 @@ function App() {
 
           //if current object was not close to any of the tracked objects
           if (isNewObj) {
+            if (obj.bbox[0] >= finishLine) return;
+
             console.warn("NEW OBJECT THAT WAS NOT BEING TRACKED");
             detections.push({
               id: detections.length + 1,
@@ -175,6 +195,20 @@ function App() {
             height: 480,
           }}
         />
+        <div
+          style={{
+            position: "absolute",
+            marginLeft: "auto",
+            marginRight: "auto",
+            left: 0,
+            right: 0,
+            top: "10%",
+            zindex: 10,
+            width: 2,
+            height: 480,
+            backgroundColor: "black",
+          }}
+        ></div>
       </div>
     </div>
   );
@@ -218,4 +252,8 @@ i removed react string mode tags from index.js, this may cause issues but it pre
 to avoid issues with sum of coords as comparison, i may want to add a large number to the coords so that small values are less likely to be seen as new objects
 
 got it to track objects pretty reliably and add them to a list pretty reliably. i need to play around with values and framerates to find whats really reliable, but its tracking and id'ing objects now it seems. I need to make a way to remove objects, likely when a certain x value is achieved i would remove that object and itterate a counter. solid progress
+
+line should be variable, because perspective matter, but for simplicity lets start w/ half way (320)
+
+I need to also make sure elements that begin tracking past finish line are not counted to begin with
 */
