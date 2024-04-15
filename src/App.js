@@ -23,8 +23,9 @@ function App() {
     //refresh in ms (framerate)
     setInterval(() => {
       //call detect function ever X ms
+      // console.log("in 5 s");
       detect(network);
-    }, 10000);
+    }, 100);
   };
 
   const detect = async (network) => {
@@ -52,56 +53,65 @@ function App() {
       ///////////////////////////////
       //DO WORK ON OBJECT TO TRACK IT
       objects.forEach((obj) => {
+        let isNewObj = true;
+
         //if its for sure a phone
         if (obj.class === "cell phone" && obj.score > confidenceFloor) {
           //this objects xy pos based on bbox (x,y,width,height)
           let objPosSum = obj.bbox[0] + obj.bbox[1];
+          let lowerBount = 0.8 * objPosSum;
+          let upperBound = 1.2 * objPosSum;
 
-          //check tracked objects for a match
-          //if none tracked, add obj
-          if (detections.length === 0) {
-            console.warn("LIST WAS EMPTY, ADDING FIRST ELEMENT");
+          //if there are objects being tracked
+          if (detections.length >= 1) {
+            //for each object being tracked
+            detections.forEach(({ id, posX, posY }) => {
+              // console.warn("LOOPING THROUGH EXISTING DETECTIONS!");
+              let trackedElPosSum = posX + posY;
+              //if current object is close to one of the objects being tracked
+              if (
+                trackedElPosSum >= lowerBount &&
+                trackedElPosSum <= upperBound
+              ) {
+                // console.warn("PREVIOUSLY TRACKED OBJECT");
+                isNewObj = false;
+                let index = detections.findIndex((obj) => obj.id === id);
+                //update the tracked objects position
+                console.log(
+                  `(${Math.round(obj.bbox[0])}, ${Math.round(obj.bbox[1])})`
+                );
+
+                detections[index].posX = Math.round(obj.bbox[0]);
+                detections[index].posY = Math.round(obj.bbox[1]);
+
+                // console.log(detections[index]);
+              }
+            });
+          } else if (detections.length === 0) {
+            //first detection of desired object
+            console.warn("LIST WAS EMPTY, ADDING FIRST DETECTION FOR TRACKING");
+            isNewObj = false;
             detections.push({
               id: 1,
-              posX: obj.bbox[0],
-              posY: obj.bbox[1],
+              posX: Math.round(obj.bbox[0]),
+              posY: Math.round(obj.bbox[1]),
             });
-            return;
-          } else {
-            //itterate through tracked objects attempting to find a positional match
-            detections.forEach(({ id, posX, posY }) => {
-              console.log(id, posX, posY);
-              console.warn("LOOPING THROUGH DETECTIONS!");
+          }
 
-              //sum of xy pos values is within 10% in either direction
-              if (0.8 * objPosSum >= posX + posY <= 1.2 * objPosSum) {
-                //update the tracked objects position
-                if (detections[id]) {
-                  detections[id].posX = obj.bbox[0];
-                  detections[id].posY = obj.bbox[1];
-                }
-                // detections[id]?.posX = obj.bbox[0];
-                // detections[id]?.posY = obj.bbox[1];
-              }
-              return;
-            });
-            //if this object is not being tracked, add it to the array
+          //if current object was not close to any of the tracked objects
+          if (isNewObj) {
             console.warn("NEW OBJECT THAT WAS NOT BEING TRACKED");
             detections.push({
               id: detections.length + 1,
-              posX: obj.bbox[0],
-              posY: obj.bbox[1],
+              posX: Math.round(obj.bbox[0]),
+              posY: Math.round(obj.bbox[1]),
             });
-
-            //if tracked object x value reaches finish line
-            //itterate count
-            //remove from list
           }
 
-          setCount((count) => count + 1);
+          // setCount((count) => count + 1);
         }
       });
-      if (detections.length > 0) console.log(detections);
+      // if (detections.length > 0) console.log(detections);
       ///////////////////////////////
 
       const canvas = canvasRef.current.getContext("2d");
@@ -113,6 +123,7 @@ function App() {
 
   //spool up coco
   useEffect(() => {
+    console.log("effect called");
     runCoco();
   }, []);
 
@@ -200,4 +211,11 @@ research "Tensorflow Cumulative Object Counting"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 summing xy coords is likely a bad idea, but its an easy way to get started w/ validation esp while testing on lone objects...
 every frame its calling all of the console warns, which means my breaks are not working. i should make this cleaner by taking the code and storing it in functions that i call rather than keeping it all in the detect function
+
+
+i removed react string mode tags from index.js, this may cause issues but it prevents the code from rendering twice in development mode (change back later)
+
+to avoid issues with sum of coords as comparison, i may want to add a large number to the coords so that small values are less likely to be seen as new objects
+
+got it to track objects pretty reliably and add them to a list pretty reliably. i need to play around with values and framerates to find whats really reliable, but its tracking and id'ing objects now it seems. I need to make a way to remove objects, likely when a certain x value is achieved i would remove that object and itterate a counter. solid progress
 */
