@@ -254,5 +254,5 @@ got it to track objects pretty reliably and add them to a list pretty reliably. 
 
 line should be variable, because perspective matter, but for simplicity lets start w/ half way (320)
 
-I need to also make sure elements that begin tracking past finish line are not counted to begin with
+refresh rate of this app can cause significant load to cpu, MIND TEMPS
 */
