@@ -15,18 +15,16 @@ function App() {
   const lineRef = useRef(null);
 
   let detections = [];
-  let confidenceFloor = 0.6;
-  let posVariance = 0.9;
+  let confidenceFloor = 0.51;
+  let posVariance = 30; // % pos can change and still think its the same obj
   const [count, setCount] = useState(0);
 
   const runCoco = async () => {
     const network = await cocossd.load();
     //refresh in ms (framerate)
     setInterval(() => {
-      //call detect function ever X ms
-      // console.log("in 5 s");
       detect(network);
-    }, 100);
+    }, 50); //100ms is 10/s
   };
 
   const detect = async (network) => {
@@ -60,8 +58,8 @@ function App() {
         if (obj.class === "cell phone" && obj.score > confidenceFloor) {
           //this objects xy pos based on bbox (x,y,width,height)
           let objPosSum = obj.bbox[0] + obj.bbox[1];
-          let lowerBount = 0.8 * objPosSum;
-          let upperBound = 1.2 * objPosSum;
+          let lowerBount = (1 - posVariance / 100) * objPosSum;
+          let upperBound = (1 + posVariance / 100) * objPosSum;
           // console.log(lowerBount, objPosSum, upperBound);
           //x value where tracked elements are counted
           const finishLine = 320;
@@ -80,6 +78,7 @@ function App() {
                 // console.warn("PREVIOUSLY TRACKED OBJECT");
                 isNewObj = false;
                 let index = detections.findIndex((obj) => obj.id === id);
+                obj.trackId = id;
                 //update the tracked objects position
                 console.log(
                   `(${Math.round(obj.bbox[0])}, ${Math.round(obj.bbox[1])})`
@@ -109,11 +108,14 @@ function App() {
 
             console.warn("LIST WAS EMPTY, ADDING FIRST DETECTION FOR TRACKING");
             isNewObj = false;
+
             detections.push({
               id: 1,
               posX: Math.round(obj.bbox[0]),
               posY: Math.round(obj.bbox[1]),
             });
+
+            obj.trackId = 1;
           }
 
           //if current object was not close to any of the tracked objects
@@ -126,18 +128,15 @@ function App() {
               posX: Math.round(obj.bbox[0]),
               posY: Math.round(obj.bbox[1]),
             });
+
+            obj.trackId = detections.length + 1;
           }
 
-          // setCount((count) => count + 1);
+          //draw boxes around objects only if meets class def
+          const canvas = canvasRef.current.getContext("2d");
+          drawBoundingRect(objects, canvas);
         }
       });
-      // if (detections.length > 0) console.log(detections);
-      ///////////////////////////////
-
-      const canvas = canvasRef.current.getContext("2d");
-
-      //draw boxes around objects
-      drawBoundingRect(objects, canvas);
     }
   };
 

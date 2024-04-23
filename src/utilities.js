@@ -4,6 +4,10 @@ export const drawBoundingRect = (detections, canvas) => {
     const prediction = detection["class"];
     const certainty = detection["score"];
     const label = `${Math.round(certainty * 100)} - ${prediction}`;
+    const trackId = detection["trackId"] || "";
+
+    //if object isnt target obj, return
+    if (prediction !== "cell phone") return;
 
     //draw a box on the canvas at that location
     const drawColor = "darkgreen";
@@ -12,7 +16,8 @@ export const drawBoundingRect = (detections, canvas) => {
     canvas.font = "20px arial";
 
     canvas.beginPath();
-    canvas.fillText(label, x, y + 20);
+    // canvas.fillText(label, x, y + 20);
+    canvas.fillText(trackId, x, y);
     canvas.rect(x, y, width, height);
     canvas.stroke();
   });
