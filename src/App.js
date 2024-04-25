@@ -257,4 +257,12 @@ got it to track objects pretty reliably and add them to a list pretty reliably. 
 line should be variable, because perspective matter, but for simplicity lets start w/ half way (320)
 
 refresh rate of this app can cause significant load to cpu, MIND TEMPS
+
+idea for counting issues:
+  instead of counting at x location, count within a field.
+  a car enters frame, and is tracked
+  it travels to the center of the screen where it is counted and has an additional flag attached to it
+  once it gets all the way to the end (~~ x + width) remove it from the array
+
+  objects on the left will need to be assigned an identifier, and objects on the right will need to be identified properly and the id must be cross referenced to ensure it is only counted once.
 */
