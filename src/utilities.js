@@ -1,4 +1,4 @@
-export const drawBoundingRect = (detections, canvas) => {
+export const drawBoundingRect = (detections, canvas, desiredObject) => {
   detections.forEach((detection) => {
     const [x, y, width, height] = detection["bbox"];
     const prediction = detection["class"];
@@ -7,10 +7,10 @@ export const drawBoundingRect = (detections, canvas) => {
     const trackId = detection["trackId"] || "";
 
     //if object isnt target obj, return
-    if (prediction !== "cell phone") return;
+    if (prediction !== `${desiredObject}`) return;
 
     //draw a box on the canvas at that location
-    const drawColor = "darkgreen";
+    const drawColor = "darkred"; //darkgreen
     canvas.strokeStyle = drawColor;
     canvas.fillStyle = drawColor;
     canvas.font = "20px arial";

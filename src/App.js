@@ -15,6 +15,7 @@ function App() {
   const lineRef = useRef(null);
 
   let detections = [];
+  const desiredObject = "car"; // "cell phone"
   let confidenceFloor = 0.51;
   let posVariance = 30; // % pos can change and still think its the same obj
   const [count, setCount] = useState(0);
@@ -55,7 +56,7 @@ function App() {
         let isNewObj = true;
 
         //if its for sure a phone
-        if (obj.class === "cell phone" && obj.score > confidenceFloor) {
+        if (obj.class === `${desiredObject}` && obj.score > confidenceFloor) {
           //this objects xy pos based on bbox (x,y,width,height)
           let objPosSum = obj.bbox[0] + obj.bbox[1];
           let lowerBount = (1 - posVariance / 100) * objPosSum;
@@ -134,7 +135,7 @@ function App() {
 
           //draw boxes around objects only if meets class def
           const canvas = canvasRef.current.getContext("2d");
-          drawBoundingRect(objects, canvas);
+          drawBoundingRect(objects, canvas, desiredObject);
         }
       });
     }
@@ -165,6 +166,7 @@ function App() {
         <Webcam
           ref={webcamRef}
           muted={true}
+          mirrored={false}
           style={{
             position: "absolute",
             marginLeft: "auto",
