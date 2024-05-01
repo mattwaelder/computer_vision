@@ -15,9 +15,9 @@ function App() {
   const lineRef = useRef(null);
 
   let detections = [];
-  const desiredObject = "car"; // "cell phone"
-  let confidenceFloor = 0.51;
-  let posVariance = 30; // % pos can change and still think its the same obj
+  const desiredObject = "car"; // "cell phone", "car"
+  let confidenceFloor = 0.4;
+  let posVariance = 40; // % pos can change and still think its the same obj
   const [count, setCount] = useState(0);
 
   const runCoco = async () => {
@@ -25,7 +25,7 @@ function App() {
     //refresh in ms (framerate)
     setInterval(() => {
       detect(network);
-    }, 50); //100ms is 10/s
+    }, 100); //100ms is 10/s
   };
 
   const detect = async (network) => {
@@ -81,19 +81,28 @@ function App() {
                 let index = detections.findIndex((obj) => obj.id === id);
                 obj.trackId = id;
                 //update the tracked objects position
-                console.log(
-                  `(${Math.round(obj.bbox[0])}, ${Math.round(obj.bbox[1])})`
-                );
-
-                //check x value to see if the object is at the finish line
+                // console.log(
+                //   `(${Math.round(obj.bbox[0])}, ${Math.round(obj.bbox[1])})`
+                // );
+                //check x value to see if the object is at or past finish line
                 if (obj.bbox[0] >= finishLine) {
-                  console.log("FINISHED");
-                  //if it is at the finish line
-                  //itterate counter
-                  setCount((count) => count + 1);
-                  //remove tracked element
-                  detections.splice(index, 1);
-                  console.log(detections);
+                  // console.log("FINISHED");
+
+                  //if element passed finish previously and is far past finish, remove it
+                  if (detections[index].hasFinished && obj.bbox[0] >= 400) {
+                    //remove tracked element
+                    console.log("REMOVE THIS ONE ITS WAY BEYOND FINISH LINE");
+                    detections.splice(index, 1);
+                  }
+
+                  //if element has not previously finished, add value
+                  if (detections[index]?.hasFinished === false) {
+                    detections[index].hasFinished = true;
+                    console.log("++");
+                    setCount((count) => count + 1);
+                  }
+
+                  // console.log(detections);
                 } else {
                   //if it is still being tracked, update coordinates
                   detections[index].posX = Math.round(obj.bbox[0]);
@@ -114,6 +123,7 @@ function App() {
               id: 1,
               posX: Math.round(obj.bbox[0]),
               posY: Math.round(obj.bbox[1]),
+              hasFinished: false,
             });
 
             obj.trackId = 1;
@@ -128,6 +138,7 @@ function App() {
               id: detections.length + 1,
               posX: Math.round(obj.bbox[0]),
               posY: Math.round(obj.bbox[1]),
+              hasFinished: false,
             });
 
             obj.trackId = detections.length + 1;
@@ -265,4 +276,6 @@ idea for counting issues:
   once it gets all the way to the end (~~ x + width) remove it from the array
 
   objects on the left will need to be assigned an identifier, and objects on the right will need to be identified properly and the id must be cross referenced to ensure it is only counted once.
-*/
+
+  alternatively, i could adjust the logic. for each frame i can first ask the program to find the locaation of each object that had been tracked in the last frame. it could then apply the object id to the closest obj (if it fails to see it, that could be an issue, tho)
+  */
