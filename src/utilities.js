@@ -6,10 +6,10 @@ export const drawBoundingRect = (detections, canvas, desiredObject) => {
     const label = `${Math.round(certainty * 100)} - ${prediction}`;
     const trackId = detection["trackId"] || "";
 
-    //if object isnt target obj, return
+    //if object isnt target class, return
     if (prediction !== `${desiredObject}`) return;
 
-    //draw a box on the canvas at that location
+    //draw box on canvas
     const drawColor = "darkred"; //darkgreen
     canvas.strokeStyle = drawColor;
     canvas.fillStyle = drawColor;
