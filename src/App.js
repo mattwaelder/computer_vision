@@ -18,8 +18,8 @@ function App() {
   const desiredObject = "car"; // "cell phone", "car"
   let confidenceFloor = 0.4;
   // % pos can change and still think its the same obj
-  let posVariance = 40;
-  const refreshRateMS = 100; //refresh rate of app
+  let posVariance = 20;
+  const refreshRateMS = 50; //refresh rate of app
   const [count, setCount] = useState(0);
 
   const runCoco = async () => {
